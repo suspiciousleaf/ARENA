@@ -350,6 +350,39 @@ prices = t.tensor([0.5, 1, 1.5, 2, 2.5])
 items = t.tensor([0, 0, 1, 1, 4, 3, 2])
 assert total_price_indexing(prices, items) == 9.0
 
+# %%
+# Exercise F.2 - gather 2D
+
+
+def gather_2d(matrix: t.Tensor, indexes: t.Tensor) -> t.Tensor:
+    """Perform a gather operation along the second dimension.
+
+    matrix: shape (m, n)
+    indexes: shape (m, k)
+
+    Return: shape (m, k). out[i][j] = matrix[i][indexes[i][j]]
+
+    For this problem, the test already passes and it's your job to write at least three asserts relating the arguments and the output. This is a tricky function and worth spending some time to wrap your head around its behavior.
+
+    See: https://pytorch.org/docs/stable/generated/torch.gather.html?highlight=gather#torch.gather
+    For diagram see https://stackoverflow.com/questions/50999977/what-does-the-gather-function-do-in-pytorch-in-layman-terms
+    """
+
+    assert matrix.ndim == indexes.ndim
+    assert indexes.shape[0] <= matrix.shape[0]
+    out = matrix.gather(1, indexes)
+    assert out.shape == indexes.shape
+    return out
+
+
+matrix = t.arange(15).view(3, 5)
+indexes = t.tensor([[4], [3], [2]])
+expected = t.tensor([[4], [8], [12]])
+assert_all_equal(gather_2d(matrix, indexes), expected)
+indexes2 = t.tensor([[2, 4], [1, 3], [0, 2]])
+expected2 = t.tensor([[2, 4], [6, 8], [10, 12]])
+assert_all_equal(gather_2d(matrix, indexes2), expected2)
+
 
 # %%
 # Einsum
