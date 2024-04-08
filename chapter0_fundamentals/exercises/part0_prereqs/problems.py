@@ -327,6 +327,31 @@ assert classifier_accuracy(scores, true_classes) == expected
 
 
 # %%
+# Exercise F.1 - total price indexing
+def total_price_indexing(prices: t.Tensor, items: t.Tensor) -> float:
+    """Given prices for each kind of item and a tensor of items purchased, return the total price.
+
+    prices: shape (k, ). prices[i] is the price of the ith item.
+    items: shape (n, ). A 1D tensor where each value is an item index from [0..k). Each value is the index of a single item purchased, return total price of order.
+
+    Use integer array indexing. The below document describes this for NumPy but it's the same in PyTorch:
+
+    https://numpy.org/doc/stable/user/basics.indexing.html#integer-array-indexing
+    """
+    assert items.max() < prices.shape[0]
+
+    # return sum([prices[item] for item in items])[0]
+    ans = prices[items].sum().item()
+
+    return ans
+
+
+prices = t.tensor([0.5, 1, 1.5, 2, 2.5])
+items = t.tensor([0, 0, 1, 1, 4, 3, 2])
+assert total_price_indexing(prices, items) == 9.0
+
+
+# %%
 # Einsum
 def einsum_trace(mat: np.ndarray):
     """
