@@ -365,7 +365,7 @@ def gather_2d(matrix: t.Tensor, indexes: t.Tensor) -> t.Tensor:
     For this problem, the test already passes and it's your job to write at least three asserts relating the arguments and the output. This is a tricky function and worth spending some time to wrap your head around its behavior.
 
     See: https://pytorch.org/docs/stable/generated/torch.gather.html?highlight=gather#torch.gather
-    For diagram see https://stackoverflow.com/questions/50999977/what-does-the-gather-function-do-in-pytorch-in-layman-terms
+    For diagram see (note diagram uses 1 index, code uses 0 index) https://stackoverflow.com/questions/50999977/what-does-the-gather-function-do-in-pytorch-in-layman-terms
     """
 
     assert matrix.ndim == indexes.ndim
@@ -382,6 +382,21 @@ assert_all_equal(gather_2d(matrix, indexes), expected)
 indexes2 = t.tensor([[2, 4], [1, 3], [0, 2]])
 expected2 = t.tensor([[2, 4], [6, 8], [10, 12]])
 assert_all_equal(gather_2d(matrix, indexes2), expected2)
+
+# %%
+# Exercise F.3 - total price gather
+
+
+def total_price_gather(prices: t.Tensor, items: t.Tensor) -> float:
+    """Compute the same as total_price_indexing, but use torch.gather."""
+    assert items.max() < prices.shape[0]
+    ans = prices.gather(0, items).sum().item()
+    return ans
+
+
+prices = t.tensor([0.5, 1, 1.5, 2, 2.5])
+items = t.tensor([0, 0, 1, 1, 4, 3, 2])
+assert total_price_gather(prices, items) == 9.0
 
 
 # %%
