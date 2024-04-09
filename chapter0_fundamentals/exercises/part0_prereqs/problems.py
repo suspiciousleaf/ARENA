@@ -445,8 +445,23 @@ def batched_logsumexp(matrix: t.Tensor) -> t.Tensor:
     A couple useful blogs about this function:
     - https://leimao.github.io/blog/LogSumExp/
     - https://gregorygundersen.com/blog/2020/02/09/log-sum-exp/
+
+    (C) Find max value for each row, (D) rearrange into 2D matrix
+    ([[max_row_1], [max_row_2]] instead of [max_row_1, max_row_2])
+    (E) subtract row max from each value in row
+    (exps) find exponent of each value
+    (F) sum along each row of exponents and take the log
+    (ans) add this to the initial row sum, (C)
+
     """
-    pass
+
+    C = matrix.max(dim=-1).values
+    D = einops.rearrange(C, "n -> n 1")
+    E = matrix - D
+    exps = t.exp(E)
+    F = t.log(t.sum(exps, dim=-1))
+    ans = C + F
+    return ans
 
 
 matrix = t.tensor([[-1000, -1000, -1000, -1000], [1000, 1000, 1000, 1000]])
