@@ -596,6 +596,32 @@ expected = t.tensor([[0, 1, 2], [6, 7, 8], [3, 4, 5], [0, 1, 2]])
 assert_all_equal(actual, expected)
 
 # %%
+# Exercise I.2 - collect columns
+
+
+def collect_columns(matrix: t.Tensor, column_indexes: t.Tensor) -> t.Tensor:
+    """Return a 2D matrix whose columns are taken from the input matrix in order according to column_indexes.
+
+    matrix: shape (m, n)
+    column_indexes: shape (k,). Each value is an integer in [0..n).
+
+    Return: shape (m, k). out[:, i] is matrix[:, column_indexes[i]].
+    Transpose matrix, select by row as above, transpose result to get back into original format
+    Alternatively, [:, column_indexes] selects all rows, but only the columns specified
+    """
+    assert column_indexes.max() < matrix.shape[1]
+    ans = matrix.T[column_indexes].T
+    ans = matrix[:, column_indexes]
+    return ans
+
+
+matrix = t.arange(15).view((5, 3))
+column_indexes = t.tensor([0, 2, 1, 0])
+actual = collect_columns(matrix, column_indexes)
+expected = t.tensor(
+    [[0, 2, 1, 0], [3, 5, 4, 3], [6, 8, 7, 6], [9, 11, 10, 9], [12, 14, 13, 12]]
+)
+assert_all_equal(actual, expected)
 
 
 # %%
