@@ -475,6 +475,130 @@ assert_all_close(actual2, expected2)
 
 
 # %%
+# Exercise H.2 - batched softmax
+def batched_softmax(matrix: t.Tensor) -> t.Tensor:
+    """For each row of the matrix, compute softmax(row).
+
+    Do this without using PyTorch's softmax function.
+    Instead, use the definition of softmax: https://en.wikipedia.org/wiki/Softmax_function
+
+    matrix: shape (batch, n)
+
+    Return: (batch, n). For each i, out[i] should sum to 1.
+
+    (exp) Calculate exponent for each value in tensor
+    (ans) Divive each exp value by the sum of the row of exp values, to normalize (get its proportion of the total sum, so total sum is mapped to 1 and each value is its relative proportion of that)
+    """
+    exp = matrix.exp()
+    ans = exp / exp.sum(dim=-1, keepdim=True)
+    return ans
+
+
+matrix = t.arange(1, 6).view((1, 5)).float().log()
+expected = t.arange(1, 6).view((1, 5)) / 15.0
+actual = batched_softmax(matrix)
+assert_all_close(actual, expected)
+for i in [0.12, 3.4, -5, 6.7]:
+    assert_all_close(actual, batched_softmax(matrix + i))
+matrix2 = t.rand((10, 20))
+actual2 = batched_softmax(matrix2)
+assert actual2.min() >= 0.0
+assert actual2.max() <= 1.0
+assert_all_equal(actual2.argsort(), matrix2.argsort())
+assert_all_close(actual2.sum(dim=-1), t.ones(matrix2.shape[:-1]))
+
+# %%
+# Exercise H.3 - batched logsoftmax
+
+
+def batched_logsoftmax(matrix: t.Tensor) -> t.Tensor:
+    """Compute log(softmax(row)) for each row of the matrix.
+
+    matrix: shape (batch, n)
+
+    Return: (batch, n). For each i, out[i] should sum to 1.
+
+    Do this without using PyTorch's logsoftmax function.
+    For each row, subtract the maximum first to avoid overflow if the row contains large values.
+    (A) Find max per row
+    (B) subtract row max from actual values
+    (ans) Compute softmax for each row, then take log and return
+    """
+    A = matrix.max(dim=-1).values
+    B = matrix - A
+    ans = batched_softmax(B).log()
+
+    return ans
+
+
+matrix = t.arange(1, 6).view((1, 5)).float()
+start = 1000
+matrix2 = t.arange(start + 1, start + 6).view((1, 5)).float()
+actual = batched_logsoftmax(matrix2)
+expected = t.tensor([[-4.4519, -3.4519, -2.4519, -1.4519, -0.4519]])
+assert_all_close(actual, expected)
+
+# %%
+# Exercise H.4 - batched cross entropy loss
+
+
+def batched_cross_entropy_loss(logits: t.Tensor, true_labels: t.Tensor) -> t.Tensor:
+    """Compute the cross entropy loss for each example in the batch.
+
+    logits: shape (batch, classes). logits[i][j] is the unnormalized prediction for example i and class j.
+    true_labels: shape (batch, ). true_labels[i] is an integer index representing the true class for example i.
+
+    Return: shape (batch, ). out[i] is the loss for example i.
+
+    Hint: convert the logits to log-probabilities using your batched_logsoftmax from above.
+    Then the loss for an example is just the negative of the log-probability that the model assigned to the true class. Use torch.gather to perform the indexing.
+    """
+    #! Answer taken from solutions on https://arena3-chapter0-fundamentals.streamlit.app/[0.0]_Prerequisites, does not pass tests
+    assert logits.shape[0] == true_labels.shape[0]
+    assert true_labels.max() < logits.shape[1]
+
+    logprobs = batched_logsoftmax(logits)
+    indices = einops.rearrange(true_labels, "n -> n 1")
+    pred_at_index = logprobs.gather(1, indices)
+    return -einops.rearrange(pred_at_index, "n 1 -> n")
+
+
+logits = t.tensor(
+    [[float("-inf"), float("-inf"), 0], [1 / 3, 1 / 3, 1 / 3], [float("-inf"), 0, 0]]
+)
+true_labels = t.tensor([2, 0, 0])
+expected = t.tensor([0.0, math.log(3), float("inf")])
+actual = batched_cross_entropy_loss(logits, true_labels)
+assert_all_close(actual, expected)
+
+# %%
+# Exercise I.1 - collect rows
+
+
+def collect_rows(matrix: t.Tensor, row_indexes: t.Tensor) -> t.Tensor:
+    """Return a 2D matrix whose rows are taken from the input matrix in order according to row_indexes.
+
+    matrix: shape (m, n)
+    row_indexes: shape (k,). Each value is an integer in [0..m).
+
+    Return: shape (k, n). out[i] is matrix[row_indexes[i]].
+    """
+    assert row_indexes.max() < matrix.shape[0]
+
+    ans = matrix[row_indexes]
+    return ans
+
+
+matrix = t.arange(15).view((5, 3))
+row_indexes = t.tensor([0, 2, 1, 0])
+actual = collect_rows(matrix, row_indexes)
+expected = t.tensor([[0, 1, 2], [6, 7, 8], [3, 4, 5], [0, 1, 2]])
+assert_all_equal(actual, expected)
+
+# %%
+
+
+# %%
 # Einsum
 def einsum_trace(mat: np.ndarray):
     """
